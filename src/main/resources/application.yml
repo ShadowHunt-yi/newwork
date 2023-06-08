@@ -1,0 +1,50 @@
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/computer_store?characterEncoding=utf8&useSSL=false&serverTimezone=UTC&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true
+    username: root
+    password: lzq030152
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 30MB
+  mvc:
+    view:
+      prefix: /web/
+      suffix: .jsp
+  devtools:
+    restart:
+      enabled: true
+
+
+mybatis:
+  type-aliases-package: top.year21.computerstore.entity
+  mapper-locations: classpath:mybatis/mapper/*.xml
+  configuration:
+
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+    map-underscore-to-camel-case: true
+
+pagehelper:
+  dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+
+server:
+
+  port: 8080
+  ip: 127.0.0.1
+
+
+
+
+
+
+
+
+

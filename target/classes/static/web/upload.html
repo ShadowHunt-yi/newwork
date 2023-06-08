@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <!--edge浏览器H5兼容设置-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!--360浏览器H5兼容设置-->
+    <meta name="renderer" content="webkit" />
+    <title>电脑商城</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--导入核心文件-->
+    <script src="../bootstrap3/js/holder.js"></script>
+    <link href="../bootstrap3/css/bootstrap.css" rel="stylesheet" type="text/css">
+    <script src="../bootstrap3/jquery-1.9.1.min.js"></script>
+    <script src="../bootstrap3/js/bootstrap.js"></script>
+    <!-- 字体图标 -->
+    <link rel="stylesheet" href="../bootstrap3/font-awesome-4.7.0/css/font-awesome.css" />
+    <link rel="stylesheet" type="text/css" href="../css/layout.css" />
+    <link rel="stylesheet" type="text/css" href="../css/top.css" />
+    <link rel="stylesheet" type="text/css" href="../css/footer.css" />
+    <!--	引入阻止表单上传跳转的js-->
+    <script src="../js/jquery-1.8.0.min.js"></script>
+    <script src="../js/jquery.form.js"></script>
+    <!--js代码	-->
+    <script type="text/javascript">
+        function afterFromSubmit() {
+            //阻止表单的默认跳转行为，并在ajax请求后进行重定向
+            $("#avatar").ajaxSubmit(function() {
+                    alert("上传成功")
+                        //页面重定向，防止表单重复提交
+                    location.href = "upload.html"
+                })
+                //这一步很关键，防止submit默认的提交跳转行为
+            return false;
+        }
+        //拍照控制
+        let videoStream;
+        const video = document.getElementById('video');
+        const startBtn = document.getElementById('start-btn');
+        const captureBtn = document.getElementById('capture-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const photoContainer = document.getElementById('photo-container');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const downloadBtn = document.createElement('button');
+        downloadBtn.innerText = '下载照片';
+        downloadBtn.disabled = true;
+
+        // 打开摄像头
+        startBtn.addEventListener('click', function() {
+            navigator.mediaDevices.getUserMedia({
+                    video: true
+                })
+                .then(function(stream) {
+                    videoStream = stream;
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(error) {
+                    console.error('无法访问摄像头：', error);
+                });
+        });
+
+        // 拍照按钮点击事件处理程序
+        captureBtn.addEventListener('click', function() {
+            // 检查摄像头是否已打开
+            if (!videoStream || !videoStream.active) {
+                alert('请先打开摄像头');
+                return;
+            }
+
+            // 在canvas上绘制视频当前帧
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+
+            // 调整照片尺寸
+            const scaledWidth = canvas.width / 2; // 将宽度缩小一半
+            const scaledHeight = canvas.height / 2; // 将高度缩小一半
+            canvas.width = scaledWidth;
+            canvas.height = scaledHeight;
+            ctx.drawImage(video, 0, 0, scaledWidth, scaledHeight);
+
+            // 将canvas图像数据转换为Data URL
+            const dataURL = canvas.toDataURL('image/png');
+
+            // 创建一个新的图像元素，并设置其源为Data URL
+            const img = document.createElement('img');
+            img.src = dataURL;
+            img.style.cursor = 'pointer';
+
+            // 创建一个下载链接，并设置其下载属性和URL
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = 'photo.png';
+            link.innerHTML = '下载照片';
+
+            // 将图像和下载链接添加到页面中
+            photoContainer.innerHTML = '';
+            photoContainer.appendChild(img);
+            photoContainer.appendChild(link);
+
+            // 检查照片容器中是否有照片，根据结果启用或禁用下载按钮
+            if (photoContainer.hasChildNodes()) {
+                downloadBtn.disabled = false;
+            } else {
+                downloadBtn.disabled = true;
+            }
+        });
+
+        // 关闭摄像头
+        stopBtn.addEventListener('click', function() {
+            if (videoStream) {
+                const tracks = videoStream.getTracks();
+                tracks.forEach(function(track) {
+                    track.stop();
+                });
+                video.srcObject = null;
+                videoStream = null;
+            }
+        });
+
+        // 将下载按钮添加到页面中
+        photoContainer.appendChild(downloadBtn);
+
+        $(function() {
+            //引入公共头部、中间导航条以及页脚
+            $(".header").load("components/head.html")
+            $(".footer").load("components/footer.html")
+            $(".middleNavigation").load("components/middleNavigationBar.html")
+
+            //网页加载完成之前自动发送ajax请求
+            $.ajax({
+                url: "/user/queryUser",
+                type: "get",
+                dataType: "json",
+                success: function(res) {
+                    //判断用户是首次注册还是老用户
+                    if (res.data.avatar !== null && res.data.avatar !== "") {
+                        //设置用户头像
+                        /* $("#img-avatar").attr("src", res.data.avatar) */
+                        document.querySelector("#img-avatar").setAttribute("src", res.data.avatar);
+                    } else {
+                        //设置为默认头像
+                        /* $("#img-avatar").attr("src", "../images/index/user.jpg") */
+                        document.querySelector("#img-avatar").setAttribute("src", "../images/index/user.jpg");
+                    }
+                },
+                error: function(err) {
+                    alert(err.message())
+                }
+            })
+        })
+    </script>
+
+</head>
+
+<body>
+    <!--头部开始-->
+    <div class="header"></div>
+    <!--头部结束-->
+
+    <!--中间导航条开始 -->
+    <div class="middleNavigation"></div>
+    <!--中间导航条结束-->
+
+    <div class="container" style="display: flex;flex-direction: row">
+
+        <div class="col-md-2">
+            <!--左侧导航开始-->
+            <div class="panel-group" id="accordion">
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <!--主选项：我的订单-->
+                        <p class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">我的订单</a>
+                        </p>
+                    </div>
+
+                    <div id="collapseOne" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <div><a href="orders.html">全部订单</a></div>
+                            <div><a href="orders.html">待付款</a></div>
+                            <div><a href="orders.html">待收货</a></div>
+                            <div><a href="orders.html">待评价</a></div>
+                            <div><a href="orders.html">退货退款</a></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <!--主选项：资料修改-->
+                        <p class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">资料修改</a>
+                        </p>
+                    </div>
+
+                    <div id="collapseTwo" class="panel-collapse collapse in">
+                        <div class="panel-body">
+                            <div><a href="password.html">修改密码</a></div>
+                            <div><a href="userdata.html">个人资料</a></div>
+                            <div><a href="upload.html"><b>上传头像</b></a></div>
+                            <div><a href="address.html">收货管理</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--左侧导航结束-->
+
+        <div class="col-md-10 ">
+            <div class="panel panel-default">
+
+                <ul class="nav nav-tabs">
+                    <li><a href="password.html">修改密码</a></li>
+                    <li><a href="userdata.html">个人资料</a></li>
+                    <li class="active"><a href="#">上传头像</a></li>
+                    <li><a href="address.html">收货管理</a></li>
+                </ul>
+
+                <div class="panel-body">
+                    <!--上传头像表单开始-->
+                    <form id="avatar" action="/file" method="post" enctype="multipart/form-data" onsubmit="return afterFromSubmit()" class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">当前头像:</label>
+                            <div class="col-md-5">
+                                <img id="img-avatar" style="width: 200px;height: 200px;border-radius:50%; overflow:hidden;" class="img-responsive" />
+                            </div>
+                            <div class="clearfix"></div>
+
+                            <div class="col-md-offset-2 col-md-4">
+                                <input id="photo" type="file" name="file">
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <input id="uploadImg" type="submit" class="btn btn-primary" value="上传" />
+                            </div>
+                        </div>
+
+                    </form>
+
+                    <video id="video" width="200" height="200"></video>
+                    <button id="start-btn">打开摄像头</button>
+                    <button id="capture-btn">拍照</button>
+                    <button id="stop-btn">关闭摄像头</button>
+
+                    <div id="photo-container"></div>
+
+                    <iframe src="" frameborder="0" name=""></iframe>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="clearfix"></div>
+    <!--页脚开始-->
+    <div class="footer"></div>
+    <!--页脚结束-->
+
+</body>
+
+</html>

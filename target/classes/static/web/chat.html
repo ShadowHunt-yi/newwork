@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>欢迎来到聊天室</title>
+</head>
+<body>
+<p>Welcome: <span id="yhm"></span></p>
+
+<div id="div1">
+  <input id="account" type="text" placeholder="用户名"/>
+  <button onclick="init()">连接聊天室</button>
+  <hr/>
+</div>
+
+<div id="div2" hidden>
+  <input id="text" type="text"/>
+  <button onclick="send()">发送消息</button>
+  <hr/>
+
+</div>
+
+
+<div id="message"></div>
+
+
+</body>
+<script type="text/javascript">
+  var websocaket = null;
+  function init() {
+    var account = document.getElementById("account").value;
+    if (account == '') {
+      setdivInnerHTML("没有输入UID");
+      return false;
+    }
+
+
+    if ('WebSocket' in window) {
+      websocaket = new WebSocket("ws://localhost:8080/websocket/" + account);
+      //用于创建 WebSocket 对象。WebSocketTest对应的是java类的注解值
+    } else {
+      setdivInnerHTML("当前浏览器不支持");
+    }
+    //连接发生错误的时候回调方法；
+    websocaket.onerror = function () {
+      setdivInnerHTML("连接错误");
+    }
+    //连接成功时建立回调方法；
+    websocaket.onopen = function () {
+
+      document.getElementById("div2").hidden = false;
+
+      document.getElementById("div1").hidden = true;
+      document.getElementById("yhm").innerText = account;
+      setdivInnerHTML("连接成功");
+    }
+    //收到消息的回调方法
+    websocaket.onmessage = function (msg) {
+      setdivInnerHTML(msg.data);
+    }
+    //连接关闭的回调方法
+    websocaket.onclose = function () {
+      setdivInnerHTML("关闭成功");
+    }
+  }
+
+  //关闭websocket
+  //
+  function closea() {
+    websocaket.close();
+    alert("点击关闭");
+  }
+
+  function setdivInnerHTML(innerHTML) {
+    document.getElementById('message').innerHTML += innerHTML + '<br/>';
+  }
+
+  function send() {
+    var message = document.getElementById('text').value;
+    websocaket.send(message);//给后台发送数据
+  }
+</script>
+</html>
